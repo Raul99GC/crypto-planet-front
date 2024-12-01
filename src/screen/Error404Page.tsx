@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 
 import error404Img from '@/assets/images/404-error.png'
 
-const Error404 = () => {
+const Error404Page = () => {
   return (
 
     <div className='w-full h-dvh'>
@@ -48,4 +48,4 @@ const Error404 = () => {
   )
 }
 
-export default Error404
+export default Error404Page
