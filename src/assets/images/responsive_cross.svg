@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid">
+  <!-- Cuadro superior -->
+  <rect x="75" y="25" width="50" height="50" fill="white" />
+  <!-- Cuadro izquierdo -->
+  <rect x="25" y="75" width="50" height="50" fill="white" />
+  <!-- Cuadro derecho -->
+  <rect x="125" y="75" width="50" height="50" fill="white" />
+  <!-- Cuadro inferior -->
+  <rect x="75" y="125" width="50" height="50" fill="white" />
+  <!-- Cuadro vacío (sin relleno y sin borde) -->
+  <rect x="75" y="75" width="50" height="50" fill="none" />
+</svg>
