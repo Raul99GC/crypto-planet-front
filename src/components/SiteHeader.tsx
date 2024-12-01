@@ -22,7 +22,7 @@ import {
   NavigationMenuTrigger
 } from '@/components/ui/navigation-menu'
 
-const logoImg = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-VWJYeGqXHVvHvVjEcrk53JvcAZvAWv.svg'
+import logoImg from '@/assets/images/logo.svg'
 
 const SiteHeader = () => {
   return (
