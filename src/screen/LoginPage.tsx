@@ -1,16 +1,108 @@
-import { NavLink } from 'react-router'
+import { NavLink, useNavigate } from 'react-router'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import ilustrationImg from '@/assets/images/invest-img.svg'
 
 import { FcGoogle } from 'react-icons/fc'
 import { FaGithub } from 'react-icons/fa'
+import Cookies from 'js-cookie'
 
-export default function LoginPage () {
-  const [showPassword, setShowPassword] = useState(false)
+import { useForm, SubmitHandler } from 'react-hook-form'
+import api from '@/utils/api'
+
+
+
+
+type Inputs = {
+  email: string,
+  password: string
+}
+
+export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const [token, setToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(false);
+
+
+  let navigate = useNavigate();
+
+  const { register, handleSubmit, formState: { errors } } = useForm<Inputs>()
+
+  useEffect(() => {
+    const isToken = Cookies.get('authToken')
+
+    if (isToken) {
+      navigate('/');
+    }
+  }, [])
+
+
+  const handleOAuth = (provider: string): void => {
+    const width = 600
+    const height = 700
+    const left = (window.innerWidth - width) / 2
+    const top = (window.innerHeight - height) / 2
+
+    const popupWindow = window.open(
+      `${process.env.BACK_URL}/oauth2/authorization/${provider}`,
+      '_blank',
+      `width=${width},height=${height},top=${top},left=${left}`
+    )
+
+    if (!popupWindow) return
+
+    const interval = setInterval(() => {
+      try {
+        const currentUrl = popupWindow.location.href
+        if (currentUrl.includes('token=')) {
+          const token = new URL(currentUrl).searchParams.get('token')
+          if (token) {
+            setToken(token)
+            Cookies.set('authToken', token, {
+              expires: 1, // Dura 7 días
+              secure: true, // Solo se envía en conexiones HTTPS
+              sameSite: 'Strict', // Evita CSRF
+            })
+            popupWindow.close()
+            clearInterval(interval)
+          }
+        }
+      } catch (e) {
+        if (popupWindow.closed) {
+          clearInterval(interval)
+        }
+      }
+    }, 250)
+  }
+
+
+  const onSubmit: SubmitHandler<Inputs> = async data => {
+    setLoading(true);
+    try {
+
+      const response = await api.post("/auth/signin", data)
+
+      console.log(response.status)
+
+      if(response.status === 200) {
+        Cookies.set('authToken', response.data.jwtToken, {
+          expires: 1, // Dura 7 días
+          secure: true, // Solo se envía en conexiones HTTPS
+          sameSite: 'Strict', // Evita CSRF
+        })
+        setLoading(false);
+        navigate('/');
+      }
+
+    } catch (error) {
+      setLoading(false);
+      console.log(error)
+    }
+  }
+
 
   return (
     <div className='w-full bg-white lg:grid lg:grid-cols-2'>
@@ -46,19 +138,34 @@ export default function LoginPage () {
             </p>
           </div>
 
-          <form className='space-y-4'>
+          <form className='space-y-4' onSubmit={handleSubmit(onSubmit)}>
+
             <div className='space-y-2'>
               <Input
                 type='email'
-                placeholder='Username or Email'
+                placeholder='Email'
                 className='h-12 bg-[#F7FAFF] border-none'
+                {...register('email', {
+                  required: 'The email is required',
+                  pattern: {
+                    value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+                    message: 'Te Email is not valid'
+                  }
+                })}
               />
             </div>
             <div className='relative'>
               <Input
                 type={showPassword ? 'text' : 'password'}
                 placeholder='Password'
-                className='h-12 pr-10 bg-[#F7FAFF] border-none'
+                className={`h-12 pr-10 bg-[#F7FAFF]  ${errors.password ? 'border-2 border-red-500' : 'border-none'}`}
+                {...register('password', {
+                  required: 'The password is required',
+                  minLength: {
+                    value: 8,
+                    message: 'The password must be at least 8 characters'
+                  }
+                })}
               />
               <Button
                 type='button'
@@ -80,7 +187,7 @@ export default function LoginPage () {
               </button>
             </div>
 
-            <Button type='submit' className='h-12 w-full bg-blue-600 text-white hover:bg-blue-700'>
+            <Button disabled={loading} type='submit' className='h-12 w-full bg-blue-600 text-white hover:bg-blue-700'>
               Login
             </Button>
 
@@ -97,6 +204,10 @@ export default function LoginPage () {
               <Button
                 variant='outline'
                 className='h-12 w-full bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                onClick={(e) => {
+                  e.preventDefault(); // Evita el comportamiento predeterminado
+                  handleOAuth('google');
+                }}
               >
                 <FcGoogle className='mr-3 w-5 h-5' />
                 Google
@@ -104,6 +215,10 @@ export default function LoginPage () {
               <Button
                 variant='outline'
                 className='h-12 w-full bg-[#24292E] text-white hover:bg-[#24292E]/90'
+                onClick={(e) => {
+                  e.preventDefault(); // Evita el comportamiento predeterminado
+                  handleOAuth('github');
+                }}
               >
                 <FaGithub className='mr-3 h-5 w-5' />
                 GitHub
